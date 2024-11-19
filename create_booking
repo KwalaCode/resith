@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Créer une réservation{% endblock %}
+{% block content %}
+    <h1>Créer une réservation</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.email1.label }}
+            {{ form.email1(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.email2.label }}
+            {{ form.email2(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.day.label }}
+            {{ form.day(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.timeslot.label }}
+            {{ form.timeslot(class="form-control") }}
+        </div>
+        {{ form.submit(class="btn btn-primary mt-3") }}
+    </form>
+{% endblock %}
