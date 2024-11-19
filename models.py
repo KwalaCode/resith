@@ -1,48 +1,81 @@
-from . import db
+from app import db, login_manager
 from flask_login import UserMixin
-from sqlalchemy.sql import func
-from sqlalchemy import Enum
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
+from flask_wtf import FlaskForm
+from wtforms import StringField, SelectField, SubmitField
+from wtforms.validators import DataRequired
 
-
-class Note(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(10000))
-    date = db.Column(db.DateTime(timezone=True), default=func.now())
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    is_admin = db.Column(db.Boolean, default=False)
+    is_team = db.Column(db.Boolean, default=False)
 
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
-class User(db.Model, UserMixin):
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True)
-    password = db.Column(db.String(150))
-    first_name = db.Column(db.String(150))
-    notes = db.relationship('Note')
-    reviews = db.relationship('Review')
+    email1 = db.Column(db.String(120), db.ForeignKey('user.email'), nullable=False)
+    email2 = db.Column(db.String(120), db.ForeignKey('user.email'), nullable=False)
+    timeslot = db.Column(db.String(20), nullable=False)
+    day = db.Column(db.Date, nullable=False)
+    is_team_booking = db.Column(db.Boolean, default=False)
 
+    @staticmethod
+    def get_available_slots(date, is_team):
+        day_name = date.strftime("%A")
+        total_slots = 8 if day_name == "Friday" else 10
+        booked_slots = Booking.query.filter_by(day=date).all()
+        available_slots = [f"{h:02d}:00-{h+1:02d}:00" for h in range(10, 10+total_slots)]
+        for booking in booked_slots:
+            if booking.timeslot in available_slots:
+                available_slots.remove(booking.timeslot)
+        return available_slots
 
-class Dbteam(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    team1 = db.Column(db.String(150),unique=True,nullable=False)
-    team2 = db.Column(db.String(150),unique=True, nullable=False)
-    day = db.Column(Enum('Lundi', 'Mardi', 'Mercredi', name='dayt_enum'), nullable=False)
-    time = db.Column(Enum(
-        '10:00', '11:00', '12:00', '13:00', '14:00', 
-        '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', 
-        name='timet_enum'
-        ), nullable=False)
-
-class Dbplayer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    player1 = db.Column(db.String(150),unique=True,nullable=False)
-    player2 = db.Column(db.String(150),unique=True, nullable=False)
-    day = db.Column(Enum('Jeudi', 'Vendredi', name='dayp_enum'), nullable=False)
-    time = db.Column(Enum(
-        '10:00', '11:00', '12:00', '13:00', '14:00', 
-        '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', 
-        name='timep_enum'
-        ), nullable=False)
+    @staticmethod
+    def can_book(user_email):
+        today = datetime.now().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        existing_booking = Booking.query.filter(
+            Booking.email1 == user_email,
+            Booking.day >= start_of_week,
+            Booking.day < start_of_week + timedelta(days=7)
+        ).first()
+        return existing_booking is None
     
-class Review(db.Model):
+    @staticmethod
+    def get_available_slots(date, is_team):
+        day_name = date.strftime("%A")
+        total_slots = 8 if day_name == "Friday" else 10
+        booked_slots = Booking.query.filter_by(day=date).all()
+        available_slots = [f"{h:02d}:00-{h+1:02d}:00" for h in range(10, 10+total_slots)]
+        for booking in booked_slots:
+            if booking.timeslot in available_slots:
+                available_slots.remove(booking.timeslot)
+        return available_slots
+    
+class BookingForm(FlaskForm):
+    opponent = SelectField('Adversaire', validators=[DataRequired()])
+    timeslot = SelectField('Créneau horaire', validators=[DataRequired()])
+    submit = SubmitField('Réserver')
+
+class AdminLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(10000))
-    user_id =db.Column(db.Integer, db.ForeignKey('user.id'))
+    admin_email = db.Column(db.String(120), db.ForeignKey('user.email'), nullable=False)
+    action = db.Column(db.String(255), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    admin = db.relationship('User', backref=db.backref('admin_logs', lazy=True))
+
+    def __repr__(self):
+        return f'<AdminLog {self.admin_email}: {self.action}>'
