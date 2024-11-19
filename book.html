@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Réserver{% endblock %}
+{% block content %}
+    <h1>Réserver un créneau</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div>
+            <label for="day">Jour:</label>
+            <select name="day" id="day" required>
+                {% for day in available_days %}
+                    <option value="{{ day.strftime('%Y-%m-%d') }}">
+                        {{ day.strftime('%A %d/%m/%Y') }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            {{ form.opponent.label }}
+            {{ form.opponent() }}
+        </div>
+        <div>
+            {{ form.timeslot.label }}
+            {{ form.timeslot() }}
+        </div>
+        {{ form.submit() }}
+    </form>
+
+    <script>
+        document.getElementById('day').addEventListener('change', function() {
+            fetch('/get_available_slots?day=' + this.value)
+                .then(response => response.json())
+                .then(data => {
+                    let timeslotSelect = document.getElementById('timeslot');
+                    timeslotSelect.innerHTML = '';
+                    data.forEach(slot => {
+                        let option = document.createElement('option');
+                        option.value = slot;
+                        option.textContent = slot;
+                        timeslotSelect.appendChild(option);
+                    });
+                });
+        });
+
+        // Trigger the change event on page load to populate time slots
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('day').dispatchEvent(new Event('change'));
+        });
+    </script>
+{% endblock %}
