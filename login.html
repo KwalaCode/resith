@@ -1,40 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Connexion{% endblock %}
 {% block content %}
-<div class="container mt-5">
+    <h1>Connexion</h1>
     <form method="POST">
-        <h3 class="text-center">RESITH</h3>
-        
-        <!-- Email Field -->
-        <div class="form-group">
-            <label for="email">Esith email address</label>
-            <input
-                type="email"
-                class="form-control"
-                id="email"
-                name="email"
-                placeholder="Enter email"
-                required
-            />
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.email.label }}
+            {{ form.email() }}
         </div>
-        
-        <!-- Password Field -->
-        <div class="form-group mt-3">
-            <label for="password">Password</label>
-            <input
-                type="password"
-                class="form-control"
-                id="password"
-                name="password"
-                placeholder="Enter password"
-                required
-            />
+        <div>
+            {{ form.password.label }}
+            {{ form.password() }}
         </div>
-        
-        <!-- Submit Button -->
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-primary">Login</button>
-        </div>
+        {{ form.submit() }}
     </form>
-</div>
 {% endblock %}
