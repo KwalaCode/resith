@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block content %}
+    <h1>Admin Panel</h1>
+    <a href="{{ url_for('admin.view_logs') }}" class="btn btn-info mb-3">Voir les logs</a>
+    <a href="{{ url_for('admin.create_user') }}" class="btn btn-success mb-3">Créer un utilisateur</a>
+    <a href="{{ url_for('admin.create_booking') }}" class="btn btn-primary mb-3">Créer une réservation</a>
+
+    <h2>Gestion des utilisateurs</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Équipe</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.email }}</td>
+                    <td>{{ 'Oui' if user.is_team else 'Non' }}</td>
+                    <td>
+                        <form action="{{ url_for('admin.toggle_team', user_id=user.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-warning btn-sm">
+                                {{ 'Retirer de' if user.is_team else 'Ajouter à' }} l'équipe
+                            </button>
+                        </form>
+                        <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                                Supprimer
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Gestion des réservations</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Jour</th>
+                <th>Créneau</th>
+                <th>Joueur 1</th>
+                <th>Joueur 2</th>
+                <th>Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.day.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ booking.timeslot }}</td>
+                    <td>{{ booking.email1 }}</td>
+                    <td>{{ booking.email2 }}</td>
+                    <td>{{ 'Équipe' if booking.is_team_booking else 'Joueur' }}</td>
+                    <td>
+                        <form action="{{ url_for('admin.delete_booking', booking_id=booking.id) }}" method="POST">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette réservation ?');">
+                                Supprimer
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
