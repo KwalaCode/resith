@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Bienvenue sur le système de réservation de terrain</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if current_user.is_authenticated %}
+  <h2>Vos réservations à venir</h2>
+  {% if user_bookings %}
+    <ul>
+    {% for booking in user_bookings %}
+      <li>
+        {{ booking.day.strftime('%d/%m/%Y') }} à {{ booking.timeslot }} - 
+        Contre: {% if booking.email1 == current_user.email %}{{ booking.email2 }}{% else %}{{ booking.email1 }}{% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p>Vous n'avez pas de réservations à venir.</p>
+  {% endif %}
+  <a href="{{ url_for('booking.book') }}" class="btn btn-primary">Réserver un terrain</a>
+{% else %}
+  <p>Veuillez vous connecter pour réserver un terrain.</p>
+  <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Se connecter</a>
+{% endif %}
+
+<h2>Réservations de la semaine</h2>
+{% if bookings %}
+  <ul>
+  {% for booking in bookings %}
+    <li>
+      {{ booking.day.strftime('%d/%m/%Y') }} à {{ booking.timeslot }} - 
+      {{ booking.email1 }} vs {{ booking.email2 }}
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>Aucune réservation pour cette semaine.</p>
+{% endif %}
+{% endblock %}
