@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block content %}
+    <h1>Admin Panel</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Is Team</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.email }}</td>
+                    <td>{{ 'Yes' if user.is_team else 'No' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.toggle_team', user_id=user.id) }}">
+                            {{ 'Remove from' if user.is_team else 'Add to' }} Team
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
